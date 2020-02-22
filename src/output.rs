@@ -14,7 +14,7 @@ impl Default for OutputFormats {
 
 #[derive(Debug, Default)]
 pub struct OutputFormat {
-    output_format: (OutputFormats),
+    output_format: OutputFormats,
     output_map: HashMap<String, HashMap<String, HashMap<String, VariableType>>>,
     pub formatted_output: String,
 }
