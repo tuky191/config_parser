@@ -10,7 +10,7 @@ set interfaces et-0/0/56 hold-time down 0
 
 example:
 
-config_parser.exe --config your_set_config --regex regex.json --structure structure.json
+./config_parser --config your_set_config --regex regex.json --structure structure.json
 
 
 
