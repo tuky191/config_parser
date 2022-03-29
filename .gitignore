@@ -1,3 +1,4 @@
 /musl
 /target
 **/*.rs.bk
+config.json
