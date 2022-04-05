@@ -79,17 +79,17 @@ pub fn run() -> Result<()> {
     let mut parsed_data_obj = parser::ParsedData::new();
     let config = get_input_parameters();
     let config_hashmap = load_structure_from_file(&config)?;
-    let regex_hashmap = load_regex_from_file(&config).unwrap(); // need to remove unwrap and handle fault state
-                                                                // println!("{:#?}", regex_hashmap);
-                                                                //process::exit(1);
-                                                                //pb.finish_with_message("Loading up structure template and regex mappings... Done!");
-                                                                //
+    let regex_hashmap = load_regex_from_file(&config)?; // need to remove unwrap and handle fault state
+                                                        // println!("{:#?}", regex_hashmap);
+                                                        //process::exit(1);
+                                                        //pb.finish_with_message("Loading up structure template and regex mappings... Done!");
+                                                        //
     info!("Parsing configuration file");
     parsed_data_obj.set_source_config(&config);
     parsed_data_obj.set_regex_hashmap(regex_hashmap);
     parsed_data_obj.parse();
     info!("Applying Template on parsed data");
-
+    //println!("{:#?}", parsed_data_obj);
     let rc_parsed_data_obj = Rc::new(parsed_data_obj);
     let mut objects_hashmap: HashMap<&String, StructuredData> = HashMap::new();
     for element in config_hashmap.iter() {

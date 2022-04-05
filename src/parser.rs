@@ -1,6 +1,7 @@
 use super::file_loader::*;
 use crate::VariableType;
-use onig::*;
+use fancy_regex::Regex;
+//use std::process::*;
 extern crate rayon;
 //use serde::{Deserialize, Serialize};
 use crate::parser::rayon::iter::IntoParallelRefIterator;
@@ -13,7 +14,7 @@ pub trait ParseData {
     fn new() -> ParsedData;
     fn parse(&mut self);
     fn _parse_line(
-        compiled_regex_arc: Arc<Vec<Result<onig::Regex, onig::Error>>>,
+        compiled_regex_arc: &Arc<Vec<Result<fancy_regex::Regex, fancy_regex::Error>>>,
         line: &str,
     ) -> HashMap<String, VariableType>;
     fn set_regex_hashmap(&mut self, map: HashMap<String, String>);
@@ -36,38 +37,28 @@ impl ParseData for ParsedData {
         &self.data
     }
     fn _parse_line(
-        compiled_regex_arc: Arc<Vec<Result<onig::Regex, onig::Error>>>,
+        compiled_regex_arc: &Arc<Vec<Result<fancy_regex::Regex, fancy_regex::Error>>>,
         line: &str,
     ) -> HashMap<String, VariableType> {
         let mut result: HashMap<String, String> = HashMap::new();
         let mut curr_map: HashMap<String, VariableType> = HashMap::new();
-
         for regex in compiled_regex_arc.iter() {
-            let mut region = Region::new();
             match regex {
-                Ok(r) => {
-                    if let Some(_position) = r.search_with_options(
-                        &line,
-                        0,
-                        line.len(),
-                        SearchOptions::SEARCH_OPTION_NONE,
-                        Some(&mut region),
-                    ) {
-                        r.foreach_name(|name, groups| {
-                            for group in groups {
-                                if let Some(pos) = region.pos(*group as usize) {
-                                    result.insert(
-                                        name.to_string(),
-                                        String::from(&line[pos.0..pos.1]),
-                                    );
-                                }
+                Ok(re) => {
+                    for (_index, capture_name) in re.capture_names().enumerate() {
+                        if let Some(name) = capture_name {
+                            let captures = re.captures(&line).unwrap();
+                            if let Some(found_capture) = captures {
+                                result.insert(
+                                    name.to_string(),
+                                    String::from(found_capture.name(name).unwrap().as_str()),
+                                );
                             }
-                            true
-                        });
+                        }
                     }
                 }
-                Err(r) => {
-                    eprintln!("Unable to parse {:#?}", r);
+                Err(re) => {
+                    eprintln!("Unable to parse {:#?}", re);
                 }
             }
         }
@@ -98,21 +89,23 @@ impl ParseData for ParsedData {
         ));
 
         let regex = &self.regex_hashmap;
-        let compiled_regex: Vec<Result<onig::Regex, onig::Error>> = regex
+        let compiled_regex: Vec<Result<fancy_regex::Regex, fancy_regex::Error>> = regex
             .iter()
             .map(|(_key, value)| Regex::new(value))
             .collect();
-        let compiled_regex_arc: Arc<Vec<Result<onig::Regex, onig::Error>>> =
+        let compiled_regex_arc: Arc<Vec<Result<fancy_regex::Regex, fancy_regex::Error>>> =
             Arc::new(compiled_regex);
         let results: Vec<HashMap<String, VariableType>> = self
             .source_config
             .clone()
             .par_iter()
             .progress_with(pb)
-            .map(|line| ParsedData::_parse_line(compiled_regex_arc.clone(), &line))
+            .map(|line| ParsedData::_parse_line(&compiled_regex_arc, &line))
             .collect();
+
         self.data = results;
     }
+
     fn set_regex_hashmap(&mut self, map: HashMap<String, String>) {
         self.regex_hashmap = map;
     }
