@@ -1,5 +1,5 @@
 # config parser
-Tool to parse configs or log files based on custom structure and regex files. Originally built for juniper set config, it can be used to parse any config or log that has repeating elements such as
+Tool to parse configs or log files based on custom json schema. Originally built for juniper set config, it can be used to parse any config or log that has repeating elements such as
 
 set interfaces et-0/0/56 description "description"
 
